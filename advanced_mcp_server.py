@@ -28,7 +28,7 @@ def is_within_roots(path:Path)->bool:
 
 
 @mcp.tool(name="read_file", description="this tool helps to read an existing file")
-def read_file(file_path:Path):
+def read_file(file_path:str)->str:
     path = BASE_DIR /  file_path
     if not is_within_roots(path):
         return f"Error: Access denied - path outside workspace roots"
@@ -42,5 +42,20 @@ def read_file(file_path:Path):
             return content
         except Exception as e:
             return f"Error: {str(e)}"
+        
+@mcp.tool(name="write_file", description="this tool hepls to write a content on file.")
+def write_file(file_path:str, content:str):
+    path = BASE_DIR / file_path
+    
+    if not is_within_roots(path):
+        return f"Error: Access denied - path outside workspace roots"
+
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+        return f"Successfully wrote {len(content)} characters to {file_path}"
+    except Exception as e:
+        return f"Error writing file: {str(e)}"
+    
     
 
