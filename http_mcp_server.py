@@ -35,8 +35,8 @@ def read_file(file_path:str)->str:
     if not is_within_roots(path):
         return f"Error: Access denied - path outside workspace roots"
     
-    elif not path.exists():
-        return f"Error : the path proived doesn't exist." 
+    # elif not path.exists():
+    #     return f"Error : the path proived doesn't exist." 
     
     else:
         try:
@@ -86,6 +86,80 @@ def list_files(directory:str="."):
         return f"Error listing directory: {str(e)}"
 
 
+@mcp.tool()
+def analyze_code(code: str, focus: str = "quality") -> str:
+    """Analyze code focusing on specified aspect.
+
+    In a full MCP implementation with bidirectional communication,
+    this tool would send a sampling/createMessage JSON-RPC request
+    to the client. For this educational lab, we return a message
+    indicating where sampling would occur.
+    """
+    return f"""[SAMPLING TRIGGER]
+This tool would send a sampling/createMessage request to the client:
+
+{{
+  'method': 'sampling/createMessage',
+  'params': {{
+    'messages': [{{'role': 'user', 'content': {{
+      'type': 'text',
+      'text': 'Analyze this code for {focus}:\\n{code[:50]}...'
+    }}}}}}],
+    'maxTokens': 500
+  }}
+}}
+
+The client would:
+1. Show approval dialog to user
+2. If approved, call LLM with the prompt
+3. Return LLM response to server
+4. Server would use response to complete analysis
+
+Note: Full bidirectional sampling requires low-level MCP SDK.
+This simplified version demonstrates the concept."""
+
+
+
+@mcp.resource("file://workspace/{filename}")
+def get_workspace_file(filename: str) -> str:
+    """Read a file from the workspace as a resource."""
+    path = BASE_DIR / filename
+
+    if not is_within_roots(path):
+        raise ValueError(f"Access denied - path outside workspace roots")
+
+    if not path.exists():
+        raise ValueError(f"File not found: {filename}")
+
+    return path.read_text()
+
+
+@mcp.prompt()
+def review_code(filename: str) -> str:
+    """Generate a prompt to review code from a file."""
+    return f"""Please review the code in file '{filename}' and provide:
+
+1. A summary of what the code does
+2. Potential bugs or issues
+3. Security concerns
+4. Suggestions for improvements
+5. Code quality assessment
+
+Focus on readability, maintainability, and best practices."""
+
+
+@mcp.prompt()
+def analyze_security(filename: str) -> str:
+    """Generate a prompt to analyze security of a file."""
+    return f"""Perform a security analysis of '{filename}' focusing on:
+
+1. Input validation and sanitization
+2. Authentication and authorization checks
+3. Potential injection vulnerabilities
+4. Data exposure risks
+5. Error handling security
+
+Provide specific line numbers and remediation suggestions."""
 
 
 if __name__ == "__main__":
